@@ -17,6 +17,7 @@ public class PricePlanService {
 
     private final List<PricePlan> pricePlans;
     private final MeterReadingService meterReadingService;
+    private static final Double SECONDS_IN_HOUR = 3600.0;
 
     public PricePlanService(List<PricePlan> pricePlans, MeterReadingService meterReadingService) {
         this.pricePlans = pricePlans;
@@ -39,6 +40,10 @@ public class PricePlanService {
         BigDecimal average = calculateAverageReading(electricityReadings);
         BigDecimal timeElapsed = calculateTimeElapsed(electricityReadings);
 
+        if (timeElapsed.compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalArgumentException("Time elapsed cannot be zero");
+        }
+
         BigDecimal averagedCost = average.divide(timeElapsed, RoundingMode.HALF_UP);
         return averagedCost.multiply(pricePlan.getUnitRate());
     }
@@ -46,20 +51,22 @@ public class PricePlanService {
     private BigDecimal calculateAverageReading(List<ElectricityReading> electricityReadings) {
         BigDecimal summedReadings = electricityReadings.stream()
                 .map(ElectricityReading::reading)
-                .reduce(BigDecimal.ZERO, (reading, accumulator) -> reading.add(accumulator));
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return summedReadings.divide(BigDecimal.valueOf(electricityReadings.size()), RoundingMode.HALF_UP);
     }
 
     private BigDecimal calculateTimeElapsed(List<ElectricityReading> electricityReadings) {
-        ElectricityReading first = electricityReadings.stream()
-                .min(Comparator.comparing(ElectricityReading::time))
-                .get();
+        Optional<ElectricityReading> firstReading = electricityReadings.stream()
+                .min(Comparator.comparing(ElectricityReading::time));
 
-        ElectricityReading last = electricityReadings.stream()
-                .max(Comparator.comparing(ElectricityReading::time))
-                .get();
+        Optional<ElectricityReading> lastReading = electricityReadings.stream()
+                .max(Comparator.comparing(ElectricityReading::time));
 
-        return BigDecimal.valueOf(Duration.between(first.time(), last.time()).getSeconds() / 3600.0);
+        if (firstReading.isEmpty() || lastReading.isEmpty()) {
+            throw new IllegalArgumentException("Electricity readings must not be empty");
+        }
+
+        return BigDecimal.valueOf(Duration.between(firstReading.get().time(), lastReading.get().time()).getSeconds() / SECONDS_IN_HOUR);
     }
 }

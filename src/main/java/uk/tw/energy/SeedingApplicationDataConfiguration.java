@@ -28,7 +28,7 @@ public class SeedingApplicationDataConfiguration {
     public List<PricePlan> pricePlans() {
         final List<PricePlan> pricePlans = new ArrayList<>();
         pricePlans.add(new PricePlan(MOST_EVIL_PRICE_PLAN_ID, "Dr Evil's Dark Energy", BigDecimal.TEN, emptyList()));
-        pricePlans.add(new PricePlan(RENEWABLES_PRICE_PLAN_ID, "The Green Eco", BigDecimal.valueOf(2), emptyList()));
+        pricePlans.add(new PricePlan(RENEWABLES_PRICE_PLAN_ID, "The Green Eco", BigDecimal.TWO, emptyList()));
         pricePlans.add(new PricePlan(STANDARD_PRICE_PLAN_ID, "Power for Everyone", BigDecimal.ONE, emptyList()));
         return pricePlans;
     }
